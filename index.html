@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RydeCircle — API Health</title>
-
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
@@ -23,7 +22,6 @@
   --mono:'DM Mono', monospace;
   --sans:'Syne', sans-serif;
 }
-
 body{
   background: radial-gradient(circle at top, #111 0%, #0a0a0b 60%);
   color:var(--text);
@@ -32,8 +30,6 @@ body{
   display:flex;
   flex-direction:column;
 }
-
-/* ── topbar ── */
 .topbar{
   position:sticky;
   top:0;
@@ -48,16 +44,12 @@ body{
 .logo{font-size:12px;letter-spacing:.12em;color:var(--muted);}
 .logo span{color:var(--accent);}
 #clock{font-family:var(--mono);font-size:11px;color:var(--muted);}
-
-/* ── main ── */
 .main{
   max-width:1100px;
   margin:auto;
   padding:32px 20px 60px;
   flex:1;
 }
-
-/* ── hero ── */
 .hero-title{
   font-size:clamp(28px,5vw,44px);
   font-weight:700;
@@ -74,8 +66,6 @@ body{
   color:var(--muted);
   margin-bottom:20px;
 }
-
-/* ── status ── */
 .status-pill{
   display:inline-flex;
   gap:8px;
@@ -91,12 +81,10 @@ body{
 .status-pill.checking{color:var(--amber);background:rgba(245,158,11,.1);}
 .status-pill.idle{color:var(--muted);}
 .dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
-
-/* ── metric grid ── */
 .metric-grid{
   display:grid;
   gap:12px;
-  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
   margin-bottom:20px;
 }
 .metric{
@@ -111,8 +99,6 @@ body{
 .good{color:var(--green);}
 .warn{color:var(--amber);}
 .bad{color:var(--red);}
-
-/* ── buttons ── */
 .actions{
   display:flex;
   flex-wrap:wrap;
@@ -131,8 +117,6 @@ button.primary{
   background:rgba(110,231,183,.1);
   color:var(--accent);
 }
-
-/* ── history bars ── */
 .history-bars{
   display:flex;
   gap:4px;
@@ -146,8 +130,6 @@ button.primary{
 .bar.ok{background:var(--green);}
 .bar.slow{background:var(--amber);}
 .bar.fail{background:var(--red);}
-
-/* ── raw response ── */
 pre{
   font-family:var(--mono);
   font-size:12px;
@@ -157,24 +139,19 @@ pre{
   padding:12px;
   border-radius:12px;
 }
-
-/* ── mobile tweaks ── */
 @media(max-width:600px){
   .metric-value{font-size:18px;}
   .hero-title{font-size:28px;}
 }
 </style>
 </head>
-
 <body>
-
 <header class="topbar">
   <div class="logo">Ryde<span>Circle</span></div>
   <div id="clock">--:--</div>
 </header>
 
 <main class="main">
-
 <h1 class="hero-title">API <em>Health</em></h1>
 <div class="url-pill">https://rydecircle-api.onrender.com/api/health</div>
 
@@ -188,6 +165,7 @@ pre{
   <div class="metric"><div class="metric-label">DB</div><div id="m-db" class="metric-value">—</div></div>
   <div class="metric"><div class="metric-label">Latency</div><div id="m-ms" class="metric-value">—</div></div>
   <div class="metric"><div class="metric-label">Uptime</div><div id="m-uptime" class="metric-value">—</div></div>
+  <div class="metric"><div class="metric-label">Telegram</div><div id="m-telegram" class="metric-value">—</div></div>
 </div>
 
 <div class="actions">
@@ -204,11 +182,12 @@ pre{
 <div class="card">
   <pre id="raw">Waiting for first check…</pre>
 </div>
-
 </main>
 
 <script>
 const API="https://rydecircle-api.onrender.com/api/health";
+const TELEGRAM_API="https://rydecircle-api.onrender.com/api/health/telegram";
+const HISTORY_API="https://rydecircle-api.onrender.com/api/health/history";
 let history=[];
 let auto=null;
 
@@ -238,34 +217,52 @@ function renderHistory(){
   }).join('');
 }
 
+async function fetchHistory(){
+  try{
+    const res=await fetch(HISTORY_API);
+    const data=await res.json();
+    history=data.map(h=>({ok:h.ok,ms:h.response_time}));
+    renderHistory();
+  }catch(e){console.error("History fetch failed",e);}
+}
+
+async function checkTelegram(){
+  try{
+    const res=await fetch(TELEGRAM_API);
+    const data=await res.json();
+    setMetric('m-telegram',data.ok ? data.bot : 'Fail', data.ok?'good':'bad');
+  }catch(e){setMetric('m-telegram','Error','bad');}
+}
+
 async function check(){
   setStatus('checking','Checking...');
   let start=Date.now();
   try{
-    let r=await fetch(API);
-    let ms=Date.now()-start;
-    let d=await r.json();
-    let ok=r.ok && d.ok;
+    const r=await fetch(API);
+    const ms=Date.now()-start;
+    const d=await r.json();
+    const ok=r.ok && d.ok;
 
     history.push({ok,ms});
-    if(history.length>20) history.shift();
+    if(history.length>50) history.shift();
 
     setStatus(ok?'online':'offline',ok?'Operational':'Down');
     setMetric('m-api',ok?'OK':'Fail',ok?'good':'bad');
     setMetric('m-db',d.db||'—', d.db==='connected'?'good':'bad');
     setMetric('m-ms',ms+'ms', ms<500?'good':ms<1500?'warn':'bad');
-
     const uptime=Math.round(history.filter(h=>h.ok).length/history.length*100);
     setMetric('m-uptime',uptime+'%',uptime>95?'good':uptime>90?'warn':'bad');
 
     document.getElementById('raw').textContent=JSON.stringify(d,null,2);
 
+    await checkTelegram();
   }catch(e){
     setStatus('offline','Error');
     setMetric('m-api','Fail','bad');
     setMetric('m-db','—','bad');
     setMetric('m-ms','—','bad');
     setMetric('m-uptime','—','bad');
+    setMetric('m-telegram','Error','bad');
     document.getElementById('raw').textContent=e;
   }
   renderHistory();
@@ -276,9 +273,9 @@ function toggle(){
   auto=setInterval(check,60000);
 }
 
-// initial check
+// initial load
+fetchHistory();
 check();
 </script>
-
 </body>
 </html>
