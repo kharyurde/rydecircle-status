@@ -9,7 +9,6 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-
 :root{
   --bg:#0a0a0b;
   --surface:#111113;
@@ -30,9 +29,11 @@ body{
   color:var(--text);
   font-family:var(--sans);
   min-height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 
-/* ─── topbar ─── */
+/* ── topbar ── */
 .topbar{
   position:sticky;
   top:0;
@@ -44,35 +45,25 @@ body{
   justify-content:space-between;
   z-index:10;
 }
-
-.logo{
-  font-size:12px;
-  letter-spacing:.12em;
-  color:var(--muted);
-}
+.logo{font-size:12px;letter-spacing:.12em;color:var(--muted);}
 .logo span{color:var(--accent);}
+#clock{font-family:var(--mono);font-size:11px;color:var(--muted);}
 
-.topbar-right{
-  font-family:var(--mono);
-  font-size:11px;
-  color:var(--muted);
-}
-
-/* ─── layout ─── */
+/* ── main ── */
 .main{
   max-width:1100px;
   margin:auto;
   padding:32px 20px 60px;
+  flex:1;
 }
 
-/* ─── hero ─── */
+/* ── hero ── */
 .hero-title{
   font-size:clamp(28px,5vw,44px);
   font-weight:700;
   margin-bottom:10px;
 }
 .hero-title em{color:var(--accent);font-style:normal;}
-
 .url-pill{
   font-family:var(--mono);
   font-size:11px;
@@ -81,9 +72,10 @@ body{
   border-radius:6px;
   display:inline-block;
   color:var(--muted);
+  margin-bottom:20px;
 }
 
-/* ─── status ─── */
+/* ── status ── */
 .status-pill{
   display:inline-flex;
   gap:8px;
@@ -94,32 +86,19 @@ body{
   margin:20px 0;
   border:1px solid var(--border);
 }
-
 .status-pill.online{color:var(--green);background:rgba(34,197,94,.1);}
 .status-pill.offline{color:var(--red);background:rgba(239,68,68,.1);}
 .status-pill.checking{color:var(--amber);background:rgba(245,158,11,.1);}
 .status-pill.idle{color:var(--muted);}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
 
-.dot{
-  width:8px;height:8px;border-radius:50%;background:currentColor;
-}
-
-/* ─── cards ─── */
-.card{
-  background:linear-gradient(145deg,#111,#0d0d0e);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:18px;
-}
-
-/* ─── metrics ─── */
+/* ── metric grid ── */
 .metric-grid{
   display:grid;
   gap:12px;
   grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
   margin-bottom:20px;
 }
-
 .metric{
   padding:16px;
   border-radius:12px;
@@ -127,31 +106,19 @@ body{
   transition:.2s;
 }
 .metric:hover{transform:translateY(-2px);}
-
-.metric-label{
-  font-size:10px;
-  color:var(--muted);
-  font-family:var(--mono);
-  margin-bottom:6px;
-}
-
-.metric-value{
-  font-size:22px;
-  font-weight:700;
-}
-
+.metric-label{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;}
+.metric-value{font-size:22px;font-weight:700;}
 .good{color:var(--green);}
 .warn{color:var(--amber);}
 .bad{color:var(--red);}
 
-/* ─── buttons ─── */
+/* ── buttons ── */
 .actions{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
   margin:20px 0;
 }
-
 button{
   padding:10px 16px;
   border-radius:10px;
@@ -160,40 +127,41 @@ button{
   color:var(--text);
   cursor:pointer;
 }
-
 button.primary{
   background:rgba(110,231,183,.1);
   color:var(--accent);
 }
 
-/* ─── history ─── */
+/* ── history bars ── */
 .history-bars{
   display:flex;
   gap:4px;
   height:60px;
 }
-
 .bar{
   flex:1;
   border-radius:4px;
   opacity:.7;
 }
-
 .bar.ok{background:var(--green);}
 .bar.slow{background:var(--amber);}
 .bar.fail{background:var(--red);}
 
-/* ─── raw ─── */
+/* ── raw response ── */
 pre{
   font-family:var(--mono);
   font-size:12px;
   color:var(--muted);
   overflow:auto;
+  background:var(--surface);
+  padding:12px;
+  border-radius:12px;
 }
 
-/* ─── mobile tweaks ─── */
+/* ── mobile tweaks ── */
 @media(max-width:600px){
   .metric-value{font-size:18px;}
+  .hero-title{font-size:28px;}
 }
 </style>
 </head>
@@ -208,7 +176,7 @@ pre{
 <main class="main">
 
 <h1 class="hero-title">API <em>Health</em></h1>
-<div class="url-pill">/api/health</div>
+<div class="url-pill">https://rydecircle-api.onrender.com/api/health</div>
 
 <div id="status-pill" class="status-pill idle">
   <span class="dot"></span>
@@ -223,8 +191,8 @@ pre{
 </div>
 
 <div class="actions">
-  <button class="primary" onclick="check()">Check</button>
-  <button onclick="toggle()">Auto</button>
+  <button class="primary" onclick="check()">Check now</button>
+  <button onclick="toggle()">Auto-refresh</button>
 </div>
 
 <div class="card">
@@ -234,7 +202,7 @@ pre{
 <br>
 
 <div class="card">
-  <pre id="raw">Waiting...</pre>
+  <pre id="raw">Waiting for first check…</pre>
 </div>
 
 </main>
@@ -245,60 +213,70 @@ let history=[];
 let auto=null;
 
 function clock(){
-document.getElementById('clock').textContent=new Date().toLocaleTimeString();
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString();
 }
 setInterval(clock,1000);clock();
 
 function setStatus(type,text){
-const el=document.getElementById('status-pill');
-el.className='status-pill '+type;
-document.getElementById('status-text').textContent=text;
+  const el=document.getElementById('status-pill');
+  el.className='status-pill '+type;
+  document.getElementById('status-text').textContent=text;
 }
 
-function set(id,val,cls){
-const el=document.getElementById(id);
-el.textContent=val;
-el.className="metric-value "+cls;
+function setMetric(id,val,cls){
+  const el=document.getElementById(id);
+  el.textContent=val;
+  el.className="metric-value "+cls;
 }
 
-function render(){
-const el=document.getElementById('bars');
-el.innerHTML=history.map(h=>{
-let c=!h.ok?'fail':h.ms>1500?'slow':'ok';
-return `<div class="bar ${c}" style="height:${Math.min(100,h.ms/10)}%"></div>`;
-}).join('');
+function renderHistory(){
+  const el=document.getElementById('bars');
+  el.innerHTML=history.map(h=>{
+    let cls=!h.ok?'fail':h.ms>1500?'slow':'ok';
+    let height=Math.min(100,h.ms/10);
+    return `<div class="bar ${cls}" style="height:${height}%"></div>`;
+  }).join('');
 }
 
 async function check(){
-setStatus('checking','Checking...');
-let t=Date.now();
-try{
-let r=await fetch(API);
-let ms=Date.now()-t;
-let d=await r.json();
-let ok=r.ok && d.ok;
+  setStatus('checking','Checking...');
+  let start=Date.now();
+  try{
+    let r=await fetch(API);
+    let ms=Date.now()-start;
+    let d=await r.json();
+    let ok=r.ok && d.ok;
 
-history.push({ok,ms});
-if(history.length>20)history.shift();
+    history.push({ok,ms});
+    if(history.length>20) history.shift();
 
-setStatus(ok?'online':'offline',ok?'Operational':'Down');
-set('m-api',ok?'OK':'Fail',ok?'good':'bad');
-set('m-db',d.db, d.db==='connected'?'good':'bad');
-set('m-ms',ms+'ms', ms<500?'good':ms<1500?'warn':'bad');
+    setStatus(ok?'online':'offline',ok?'Operational':'Down');
+    setMetric('m-api',ok?'OK':'Fail',ok?'good':'bad');
+    setMetric('m-db',d.db||'—', d.db==='connected'?'good':'bad');
+    setMetric('m-ms',ms+'ms', ms<500?'good':ms<1500?'warn':'bad');
 
-document.getElementById('raw').textContent=JSON.stringify(d,null,2);
+    const uptime=Math.round(history.filter(h=>h.ok).length/history.length*100);
+    setMetric('m-uptime',uptime+'%',uptime>95?'good':uptime>90?'warn':'bad');
 
-}catch(e){
-setStatus('offline','Error');
-}
-render();
+    document.getElementById('raw').textContent=JSON.stringify(d,null,2);
+
+  }catch(e){
+    setStatus('offline','Error');
+    setMetric('m-api','Fail','bad');
+    setMetric('m-db','—','bad');
+    setMetric('m-ms','—','bad');
+    setMetric('m-uptime','—','bad');
+    document.getElementById('raw').textContent=e;
+  }
+  renderHistory();
 }
 
 function toggle(){
-if(auto){clearInterval(auto);auto=null;return;}
-auto=setInterval(check,60000);
+  if(auto){clearInterval(auto);auto=null;return;}
+  auto=setInterval(check,60000);
 }
 
+// initial check
 check();
 </script>
 
