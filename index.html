@@ -3,483 +3,671 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RydeCircle — API Health</title>
+<title>RydeCircle — System Status</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
 :root{
-  --bg:#09090b;--surface:#111113;--surface-2:#18181b;--surface-3:#1f1f23;
-  --border:rgba(255,255,255,0.07);--border-strong:rgba(255,255,255,0.13);
-  --text:#f1f1f1;--muted:#6b6b72;--dim:#3a3a42;
-  --green:#22c55e;--green-bg:rgba(34,197,94,0.1);
-  --amber:#f59e0b;--amber-bg:rgba(245,158,11,0.1);
-  --red:#ef4444;--red-bg:rgba(239,68,68,0.1);
-  --accent:#6ee7b7;--accent-bg:rgba(110,231,183,0.08);
-  --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
+  --bg:#fafafa;
+  --bg-2:#f5f5f5;
+  --bg-3:#efefef;
+  --white:#ffffff;
+  --border:#e5e5e5;
+  --border-dark:#d4d4d4;
+  --text:#111111;
+  --text-2:#404040;
+  --text-3:#737373;
+  --text-4:#a3a3a3;
+  --green:#16a34a;
+  --green-light:#dcfce7;
+  --green-border:#bbf7d0;
+  --green-dot:#22c55e;
+  --amber:#b45309;
+  --amber-light:#fef3c7;
+  --amber-border:#fde68a;
+  --amber-dot:#f59e0b;
+  --red:#dc2626;
+  --red-light:#fee2e2;
+  --red-border:#fecaca;
+  --red-dot:#ef4444;
+  --sans:'Geist',system-ui,sans-serif;
+  --mono:'Geist Mono',monospace;
+  --radius:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -1px rgba(0,0,0,.04);
 }
-html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--sans);}
+
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
 body{display:flex;flex-direction:column;}
-.topbar{
-  position:sticky;top:0;z-index:10;
-  background:rgba(9,9,11,0.85);backdrop-filter:blur(12px);
+
+nav{
+  background:var(--white);
   border-bottom:1px solid var(--border);
-  padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;
+  height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
 }
-.logo{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
-.logo strong{color:var(--accent);font-weight:500;}
-#clock{font-family:var(--mono);font-size:11px;color:var(--dim);}
-.main{max-width:1000px;margin:0 auto;padding:40px 24px 80px;flex:1;width:100%;}
-.hero{margin-bottom:36px;}
-.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;}
-.hero-title{font-size:clamp(26px,4vw,42px);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin-bottom:14px;}
-.hero-title em{font-style:normal;color:var(--accent);}
-.url-pill{font-family:var(--mono);font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);display:inline-block;}
-.status-pill{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:7px 16px;border-radius:100px;border:1px solid transparent;
-  font-family:var(--mono);font-size:12px;font-weight:500;
-  margin:20px 0 32px;transition:all .3s;
+.nav-brand{display:flex;align-items:center;gap:10px;}
+.nav-logo{
+  width:28px;height:28px;border-radius:6px;
+  background:#111;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;letter-spacing:-.02em;
 }
-.status-pill.online{background:var(--green-bg);border-color:rgba(34,197,94,.25);color:var(--green);}
-.status-pill.offline{background:var(--red-bg);border-color:rgba(239,68,68,.25);color:var(--red);}
-.status-pill.checking{background:var(--amber-bg);border-color:rgba(245,158,11,.25);color:var(--amber);}
-.status-pill.idle{background:var(--surface-2);color:var(--muted);}
-.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
-.dot.pulse{animation:pulse 1.8s ease-in-out infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.8);}}
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
-.metric{background:var(--surface);padding:18px 20px;transition:background .2s;}
-.metric:hover{background:var(--surface-2);}
-.metric-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;}
-.metric-value{font-size:24px;font-weight:700;letter-spacing:-.02em;transition:color .3s;}
-.metric-sub{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px;}
-.good{color:var(--green)!important;}.warn{color:var(--amber)!important;}.bad{color:var(--red)!important;}.neu{color:var(--text)!important;}.muted-c{color:var(--muted)!important;}
-.actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;align-items:center;}
-button{font-family:var(--sans);font-size:13px;font-weight:500;padding:9px 18px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.02em;}
-button:hover{background:var(--surface-3);color:var(--text);border-color:rgba(255,255,255,.2);}
-button:active{transform:scale(.97);}
-button:disabled{opacity:.4;cursor:not-allowed;}
-button.primary{background:var(--accent-bg);border-color:rgba(110,231,183,.3);color:var(--accent);}
-button.primary:hover{background:rgba(110,231,183,.15);border-color:rgba(110,231,183,.5);}
-button.active-toggle{background:var(--amber-bg);border-color:rgba(245,158,11,.3);color:var(--amber);}
-.countdown-wrap{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
-#countdown-text{font-family:var(--mono);font-size:11px;color:var(--dim);min-width:52px;}
-.progress-track{flex:1;height:2px;background:var(--surface-3);border-radius:2px;overflow:hidden;}
-.progress-fill{height:100%;background:var(--accent);border-radius:2px;opacity:.5;transition:width 1s linear;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;}
-.card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
-.card-title{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
-.card-meta{font-family:var(--mono);font-size:10px;color:var(--dim);}
-.card-body{padding:20px;}
+.nav-name{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.01em;}
+.nav-badge{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:2px 7px;border-radius:4px;
+  background:var(--bg-2);color:var(--text-3);
+  border:1px solid var(--border);
+}
+.nav-right{display:flex;align-items:center;gap:16px;}
+#clock{font-family:var(--mono);font-size:12px;color:var(--text-3);}
 
-/* ── timeline ── */
-.timeline-scroll{overflow-x:auto;padding-bottom:6px;}
-.timeline{display:flex;gap:3px;min-width:max-content;}
-.slot{width:14px;height:36px;border-radius:3px;cursor:default;position:relative;flex-shrink:0;transition:opacity .2s;}
-.slot:hover{opacity:.7;}
-.slot:hover .tip{display:block;}
-.tip{display:none;position:absolute;bottom:calc(100%+6px);left:50%;transform:translateX(-50%);background:var(--surface-3);border:1px solid var(--border-strong);border-radius:5px;padding:4px 8px;font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap;z-index:20;pointer-events:none;}
-.slot.up{background:var(--green);opacity:.65;}
-.slot.down{background:var(--red);opacity:.85;}
-.slot.slow{background:var(--amber);opacity:.75;}
-.slot.empty{background:var(--surface-3);}
-.legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
-.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--muted);}
-.legend-swatch{width:10px;height:10px;border-radius:2px;}
+main{max-width:860px;width:100%;margin:0 auto;padding:40px 24px 80px;flex:1;}
 
-/* ── chart ── */
-.chart-bars{display:flex;align-items:flex-end;gap:2px;height:80px;}
-.chart-bar{flex:1;border-radius:2px 2px 0 0;min-height:3px;position:relative;cursor:default;}
-.chart-bar.ok{background:var(--green);opacity:.6;}
-.chart-bar.slow{background:var(--amber);opacity:.7;}
-.chart-bar.fail{background:var(--red);opacity:.85;}
-.chart-bar.empty{background:var(--surface-3);}
-.chart-bar:hover .tip{display:block;}
+.status-banner{
+  border-radius:var(--radius);
+  padding:20px 24px;
+  margin-bottom:32px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  transition:all .4s ease;
+  border:1px solid;
+}
+.status-banner.operational{background:var(--green-light);border-color:var(--green-border);}
+.status-banner.degraded{background:var(--amber-light);border-color:var(--amber-border);}
+.status-banner.outage{background:var(--red-light);border-color:var(--red-border);}
+.status-banner.checking{background:var(--bg-2);border-color:var(--border);}
+.banner-left{display:flex;align-items:center;gap:14px;}
+.banner-icon{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.operational .banner-icon{background:rgba(22,163,74,.15);}
+.degraded .banner-icon{background:rgba(180,83,9,.12);}
+.outage .banner-icon{background:rgba(220,38,38,.12);}
+.checking .banner-icon{background:var(--bg-3);}
+.banner-text{font-size:17px;font-weight:600;letter-spacing:-.02em;}
+.operational .banner-text{color:var(--green);}
+.degraded .banner-text{color:var(--amber);}
+.outage .banner-text{color:var(--red);}
+.checking .banner-text{color:var(--text-3);}
+.banner-sub{font-size:12px;margin-top:2px;}
+.operational .banner-sub{color:var(--green);}
+.degraded .banner-sub{color:var(--amber);}
+.outage .banner-sub{color:var(--red);}
+.checking .banner-sub{color:var(--text-4);}
+.banner-time{font-family:var(--mono);font-size:11px;color:var(--text-3);white-space:nowrap;}
 
-/* ── incidents ── */
-.incident-list{display:flex;flex-direction:column;gap:10px;}
-.incident{padding:14px 16px;border-radius:8px;border:1px solid var(--border);}
-.incident.open{background:var(--red-bg);border-color:rgba(239,68,68,.2);}
-.incident.resolved{background:var(--surface-2);}
-.inc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
-.badge{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;letter-spacing:.06em;font-weight:500;}
-.badge.open{background:rgba(239,68,68,.15);color:var(--red);}
-.badge.resolved{background:rgba(34,197,94,.1);color:var(--green);}
-.inc-time{font-family:var(--mono);font-size:11px;color:var(--muted);}
-.inc-dur{font-family:var(--mono);font-size:11px;color:var(--dim);}
-.no-data{font-family:var(--mono);font-size:12px;color:var(--dim);text-align:center;padding:20px;}
+.section-label{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-3);margin-bottom:12px;margin-top:32px;
+}
+.section-label:first-of-type{margin-top:0;}
 
-/* ── raw ── */
-pre{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;word-break:break-all;}
-.jk{color:#94a3b8;}.js{color:var(--accent);}.jt{color:var(--green);}.jf{color:var(--red);}.jn{color:var(--amber);}
+.metric-strip{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  margin-bottom:24px;
+  box-shadow:var(--shadow);
+}
+.metric-cell{background:var(--white);padding:16px 18px;}
+.metric-label{font-size:11px;font-weight:500;color:var(--text-3);margin-bottom:6px;letter-spacing:.01em;}
+.metric-value{font-size:22px;font-weight:700;letter-spacing:-.03em;color:var(--text-4);transition:color .3s;}
+.metric-value.good{color:var(--green);}
+.metric-value.warn{color:var(--amber);}
+.metric-value.bad{color:var(--red);}
+.metric-value.neu{color:var(--text);}
+.metric-sub{font-family:var(--mono);font-size:10px;color:var(--text-4);margin-top:2px;}
 
-footer{border-top:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
-footer span,footer a{font-family:var(--mono);font-size:11px;color:var(--dim);}
-footer a{text-decoration:none;transition:color .2s;}
-footer a:hover{color:var(--muted);}
+.components-card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  margin-bottom:24px;
+}
+.component-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.component-row:last-child{border-bottom:none;}
+.component-row:hover{background:var(--bg);}
+.comp-left{display:flex;align-items:center;gap:12px;}
+.comp-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  transition:background .3s;
+}
+.comp-dot.up{background:var(--green-dot);}
+.comp-dot.slow{background:var(--amber-dot);}
+.comp-dot.down{background:var(--red-dot);}
+.comp-dot.unknown{background:var(--text-4);}
+.comp-dot.pulse{animation:dotpulse 2s ease-in-out infinite;}
+@keyframes dotpulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4);}
+  50%{box-shadow:0 0 0 4px rgba(34,197,94,0);}
+}
+.comp-name{font-size:14px;font-weight:500;color:var(--text);}
+.comp-desc{font-size:12px;color:var(--text-3);}
+.comp-right{display:flex;align-items:center;gap:16px;}
+.comp-uptime-bar{display:flex;gap:2px;align-items:center;}
+.uptime-seg{
+  width:8px;height:28px;border-radius:3px;cursor:default;
+  position:relative;flex-shrink:0;
+  transition:opacity .15s;
+}
+.uptime-seg:hover{opacity:.7;}
+.uptime-seg:hover .seg-tip{display:block;}
+.seg-tip{
+  display:none;position:absolute;bottom:calc(100%+5px);
+  left:50%;transform:translateX(-50%);
+  background:var(--text);color:var(--white);
+  font-family:var(--mono);font-size:10px;
+  padding:4px 8px;border-radius:4px;white-space:nowrap;z-index:30;pointer-events:none;
+  box-shadow:var(--shadow-md);
+}
+.seg-tip::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-top-color:var(--text);
+}
+.uptime-seg.up{background:var(--green-dot);opacity:.7;}
+.uptime-seg.slow{background:var(--amber-dot);opacity:.8;}
+.uptime-seg.down{background:var(--red-dot);opacity:.9;}
+.uptime-seg.empty{background:var(--bg-3);}
+.comp-status-tag{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:3px 8px;border-radius:4px;white-space:nowrap;
+  border:1px solid;
+}
+.comp-status-tag.up{background:var(--green-light);color:var(--green);border-color:var(--green-border);}
+.comp-status-tag.slow{background:var(--amber-light);color:var(--amber);border-color:var(--amber-border);}
+.comp-status-tag.down{background:var(--red-light);color:var(--red);border-color:var(--red-border);}
+.comp-status-tag.unknown{background:var(--bg-2);color:var(--text-3);border-color:var(--border);}
+.uptime-pct{font-family:var(--mono);font-size:10px;color:var(--text-3);text-align:right;min-width:44px;}
 
-@media(max-width:600px){
-  .topbar,.main,footer{padding-left:16px;padding-right:16px;}
-  .metric-grid{grid-template-columns:1fr 1fr;}
-  .hero-title{font-size:26px;}
+.chart-card{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow);margin-bottom:24px;
+}
+.chart-header{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.01em;}
+.chart-meta{font-family:var(--mono);font-size:11px;color:var(--text-3);}
+.chart-body{padding:20px 20px 16px;}
+.chart-area{display:flex;align-items:flex-end;gap:2px;height:72px;}
+.chart-col{
+  flex:1;border-radius:3px 3px 0 0;
+  min-height:3px;cursor:default;position:relative;
+  transition:opacity .15s;
+}
+.chart-col:hover{opacity:.75;}
+.chart-col.ok{background:var(--green-dot);}
+.chart-col.slow{background:var(--amber-dot);}
+.chart-col.fail{background:var(--red-dot);}
+.chart-col.empty{background:var(--bg-3);}
+.chart-col:hover .seg-tip{display:block;}
+.chart-footer{display:flex;justify-content:space-between;margin-top:8px;}
+.chart-footer span{font-family:var(--mono);font-size:10px;color:var(--text-4);}
+.chart-legend{
+  display:flex;gap:16px;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--border);flex-wrap:wrap;
+}
+.legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--text-3);}
+.legend-dot{width:8px;height:8px;border-radius:2px;}
+
+.incidents-card{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow);margin-bottom:24px;
+}
+.incidents-header{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.inc-item{padding:16px 20px;border-bottom:1px solid var(--border);}
+.inc-item:last-child{border-bottom:none;}
+.inc-row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px;}
+.inc-indicator{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.inc-indicator.open{background:var(--red-dot);}
+.inc-indicator.resolved{background:var(--green-dot);}
+.inc-title-wrap{display:flex;align-items:flex-start;gap:10px;flex:1;}
+.inc-title{font-size:14px;font-weight:500;color:var(--text);letter-spacing:-.01em;}
+.inc-badge{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  padding:2px 7px;border-radius:4px;border:1px solid;
+  white-space:nowrap;margin-top:1px;flex-shrink:0;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.inc-badge.open{background:var(--red-light);color:var(--red);border-color:var(--red-border);}
+.inc-badge.resolved{background:var(--green-light);color:var(--green);border-color:var(--green-border);}
+.inc-meta{
+  display:flex;gap:16px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:11px;color:var(--text-3);
+  padding-left:20px;
+}
+.no-incidents{
+  padding:40px 20px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.no-inc-icon{font-size:28px;}
+.no-inc-text{font-size:14px;font-weight:500;color:var(--green);}
+.no-inc-sub{font-size:12px;color:var(--text-3);}
+
+.controls{display:flex;align-items:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.btn{
+  font-family:var(--sans);font-size:13px;font-weight:500;
+  padding:8px 16px;border-radius:var(--radius);
+  border:1px solid var(--border-dark);
+  background:var(--white);color:var(--text-2);
+  cursor:pointer;transition:all .15s;letter-spacing:-.01em;
+  box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{background:var(--bg-2);border-color:var(--border-dark);color:var(--text);}
+.btn:active{transform:scale(.98);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn.primary{background:var(--text);color:var(--white);border-color:var(--text);}
+.btn.primary:hover{background:#333;border-color:#333;}
+.btn.active{background:var(--green-light);color:var(--green);border-color:var(--green-border);}
+.countdown-row{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:11px;color:var(--text-3);
+  margin-bottom:24px;
+}
+.progress-rail{flex:1;height:2px;background:var(--bg-3);border-radius:2px;overflow:hidden;max-width:200px;}
+.progress-fill{height:100%;background:var(--green-dot);border-radius:2px;transition:width 1s linear;}
+
+footer{
+  border-top:1px solid var(--border);background:var(--white);
+  padding:14px 40px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+}
+.footer-left{display:flex;align-items:center;gap:8px;}
+footer span,footer a{font-family:var(--mono);font-size:11px;color:var(--text-4);text-decoration:none;}
+footer a:hover{color:var(--text-2);}
+.footer-sep{color:var(--border-dark);}
+
+@media(max-width:700px){
+  nav,footer{padding-left:16px;padding-right:16px;}
+  main{padding:24px 16px 60px;}
+  .metric-strip{grid-template-columns:1fr 1fr;}
+  .comp-uptime-bar{display:none;}
+  .uptime-pct{display:none;}
 }
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="logo">Ryde<strong>Circle</strong></div>
-  <div id="clock">--:--:--</div>
-</header>
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">RC</div>
+    <span class="nav-name">RydeCircle</span>
+    <span class="nav-badge">Status</span>
+  </div>
+  <div class="nav-right">
+    <span id="clock">--:--:--</span>
+  </div>
+</nav>
 
-<main class="main">
+<main>
 
-  <div class="hero">
-    <p class="eyebrow">System status</p>
-    <h1 class="hero-title">API <em>health</em></h1>
-    <span class="url-pill">rydecircle-api.onrender.com/api/health</span>
+  <div class="status-banner checking" id="banner">
+    <div class="banner-left">
+      <div class="banner-icon" id="banner-icon">⏳</div>
+      <div>
+        <div class="banner-text" id="banner-text">Checking systems…</div>
+        <div class="banner-sub" id="banner-sub">Fetching latest status</div>
+      </div>
+    </div>
+    <div class="banner-time" id="banner-time"></div>
   </div>
 
-  <div id="status-pill" class="status-pill idle">
-    <span class="dot" id="status-dot"></span>
-    <span id="status-text">Not checked</span>
+  <div class="metric-strip">
+    <div class="metric-cell">
+      <div class="metric-label">24h Uptime</div>
+      <div class="metric-value" id="m-uptime">—</div>
+      <div class="metric-sub" id="m-uptime-sub"></div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">Avg Response</div>
+      <div class="metric-value" id="m-avg">—</div>
+      <div class="metric-sub" id="m-avg-sub"></div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">Last Latency</div>
+      <div class="metric-value" id="m-ms">—</div>
+      <div class="metric-sub" id="m-ms-sub"></div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">Telegram Bot</div>
+      <div class="metric-value" id="m-tg">—</div>
+      <div class="metric-sub" id="m-tg-sub"></div>
+    </div>
   </div>
 
-  <div class="metric-grid">
-    <div class="metric"><div class="metric-label">API</div><div class="metric-value muted-c" id="m-api">—</div></div>
-    <div class="metric"><div class="metric-label">Database</div><div class="metric-value muted-c" id="m-db">—</div></div>
-    <div class="metric"><div class="metric-label">Latency</div><div class="metric-value muted-c" id="m-ms">—</div><div class="metric-sub" id="m-ms-sub"></div></div>
-    <div class="metric"><div class="metric-label">24h uptime</div><div class="metric-value muted-c" id="m-uptime">—</div></div>
-    <div class="metric"><div class="metric-label">Avg response</div><div class="metric-value muted-c" id="m-avg">—</div></div>
-    <div class="metric"><div class="metric-label">Telegram</div><div class="metric-value muted-c" id="m-telegram">—</div><div class="metric-sub" id="m-telegram-sub"></div></div>
+  <div class="controls">
+    <button class="btn primary" id="check-btn" onclick="doCheck()">
+      <span id="check-icon">↻</span> Check now
+    </button>
+    <button class="btn" id="auto-btn" onclick="toggleAuto()">Auto-refresh: off</button>
   </div>
-
-  <div class="actions">
-    <button class="primary" id="check-btn" onclick="doCheck()">Check now</button>
-    <button id="auto-btn" onclick="toggleAuto()">Auto-refresh: off</button>
-  </div>
-  <div class="countdown-wrap" id="countdown-wrap" style="display:none;">
+  <div class="countdown-row" id="countdown-row" style="display:none;">
     <span id="countdown-text">15m 00s</span>
-    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
+    <div class="progress-rail"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
+    <span>until next check</span>
   </div>
 
-  <!-- uptime timeline -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Uptime timeline — 15-min slots</span>
-      <span class="card-meta" id="timeline-meta"></span>
+  <div class="section-label">Components</div>
+  <div class="components-card" id="components-card"></div>
+
+  <div class="section-label">Response Time — last 50 checks</div>
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">API response history</span>
+      <span class="chart-meta" id="chart-meta">Loading…</span>
     </div>
-    <div class="card-body">
-      <div class="timeline-scroll"><div class="timeline" id="timeline"><span class="no-data">Loading…</span></div></div>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-swatch" style="background:var(--green);opacity:.65;"></div>Up</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:var(--amber);opacity:.75;"></div>Slow (&gt;1.5s)</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:var(--red);opacity:.85;"></div>Down</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:var(--surface-3);"></div>No data</div>
+    <div class="chart-body">
+      <div class="chart-area" id="chart-area">
+        <div style="align-self:center;font-family:var(--mono);font-size:12px;color:var(--text-3);">Loading…</div>
+      </div>
+      <div class="chart-footer">
+        <span id="chart-oldest"></span>
+        <span id="chart-newest"></span>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green-dot);opacity:.7;"></div>Fast (&lt;500ms)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber-dot);opacity:.8;"></div>Slow (&gt;1.5s)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red-dot);"></div>Failed</div>
       </div>
     </div>
   </div>
 
-  <!-- response chart -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Response time — last 50 checks</span>
-      <span class="card-meta" id="chart-meta"></span>
+  <div class="section-label">Incident History</div>
+  <div class="incidents-card">
+    <div class="incidents-header">
+      <span class="chart-title">Recent incidents</span>
+      <span class="chart-meta" id="incident-meta">Loading…</span>
     </div>
-    <div class="card-body">
-      <div class="chart-bars" id="chart-bars">
-        <span class="no-data" style="align-self:center;">Loading…</span>
-      </div>
+    <div id="incident-list">
+      <div style="padding:20px;font-family:var(--mono);font-size:12px;color:var(--text-3);">Loading…</div>
     </div>
-  </div>
-
-  <!-- incidents -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Incidents</span>
-      <span class="card-meta" id="incident-meta"></span>
-    </div>
-    <div class="card-body">
-      <div class="incident-list" id="incident-list"><div class="no-data">Loading…</div></div>
-    </div>
-  </div>
-
-  <!-- raw -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Raw response</span>
-      <span class="card-meta" id="raw-time"></span>
-    </div>
-    <div class="card-body"><pre id="raw-pre">Waiting for first check…</pre></div>
   </div>
 
 </main>
 
 <footer>
-  <span>RydeCircle API health monitor</span>
-  <a href="https://rydecircle-api.onrender.com/api/health" target="_blank">↗ open endpoint</a>
+  <div class="footer-left">
+    <span>RydeCircle System Status</span>
+    <span class="footer-sep">·</span>
+    <a href="https://rydecircle.com" target="_blank">rydecircle.com</a>
+  </div>
 </footer>
 
 <script>
-const BASE         = 'https://rydecircle-api.onrender.com';
-const HEALTH_URL   = BASE + '/api/health';
-const HISTORY_URL  = BASE + '/api/health/history';
-const STATS_URL    = BASE + '/api/stats';
-const TELEGRAM_URL = BASE + '/api/health/telegram';
+/* ── Config ── */
+const STATUS_URL = 'https://rydecircle-api.onrender.com/status-data';
+const AUTO_SECS  = 15 * 60;
 
-let autoActive = false;
-let countdownSec = 0;
-let countdownInterval = null;
-const AUTO_SECS = 15 * 60;
+const COMPONENTS = [
+  { id: 'api',      name: 'API Gateway',    desc: 'Core REST API endpoints' },
+  { id: 'database', name: 'Database',       desc: 'PostgreSQL via Supabase' },
+  { id: 'auth',     name: 'Authentication', desc: 'JWT login & token validation' },
+  { id: 'drivers',  name: 'Driver Services',desc: 'Trips, earnings, support' },
+  { id: 'bookings', name: 'Booking Engine', desc: 'Seat reservation & payment' },
+  { id: 'alerts',   name: 'Alert System',   desc: 'Telegram notifications' },
+];
 
-/* clock */
-function tick() {
-  document.getElementById('clock').textContent =
-    new Date().toLocaleTimeString('en-GB', { hour12: false });
-}
-tick(); setInterval(tick, 1000);
+let autoActive = false, countdownSec = 0, countdownTimer = null, lastHistory = [];
 
-/* helpers */
-function setPill(cls, text, pulse) {
-  document.getElementById('status-pill').className = 'status-pill ' + cls;
-  document.getElementById('status-text').textContent = text;
-  document.getElementById('status-dot').className = 'dot' + (pulse ? ' pulse' : '');
+/* ── Clock ── */
+function tick(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-GB',{hour12:false}); }
+tick(); setInterval(tick,1000);
+
+/* ── Helpers ── */
+function fmtMs(ms){ return ms < 1000 ? ms+'ms' : (ms/1000).toFixed(1)+'s'; }
+function colorMs(ms){ return ms < 500 ? 'good' : ms < 1500 ? 'warn' : 'bad'; }
+function fmtTime(iso){
+  if(!iso) return '—';
+  return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
-function setMetric(id, val, cls, sub) {
-  const el = document.getElementById(id);
-  el.textContent = val;
-  el.className = 'metric-value ' + (cls || 'muted-c');
-  const s = document.getElementById(id + '-sub');
-  if (s && sub !== undefined) s.textContent = sub;
-}
-function colorMs(ms) { return ms < 500 ? 'good' : ms < 1500 ? 'warn' : 'bad'; }
-function fmtDT(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-}
-function durBetween(from, to) {
-  if (!from) return '';
-  const ms = (to ? new Date(to) : new Date()) - new Date(from);
-  const m = Math.round(ms / 60000);
-  if (m < 60) return m + 'm';
-  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
-}
-function highlightJSON(obj) {
-  return JSON.stringify(obj, null, 2)
-    .replace(/("[\w]+")\s*:/g, '<span class="jk">$1</span>:')
-    .replace(/:\s*(".*?")/g,   ': <span class="js">$1</span>')
-    .replace(/:\s*(true)/g,    ': <span class="jt">$1</span>')
-    .replace(/:\s*(false)/g,   ': <span class="jf">$1</span>')
-    .replace(/:\s*(\d+\.?\d*)/g, ': <span class="jn">$1</span>');
+function dur(from,to){
+  if(!from) return '';
+  const m = Math.round(((to ? new Date(to) : new Date()) - new Date(from))/60000);
+  if(m < 2) return 'Less than 1 min';
+  if(m < 60) return m+' min';
+  const h=Math.floor(m/60),r=m%60;
+  return h+'h '+(r>0?r+'m':'');
 }
 
-/* ── 15-min timeline ── */
-function renderTimeline(rows) {
-  const el = document.getElementById('timeline');
-  if (!rows || !rows.length) {
-    el.innerHTML = '<span style="font-family:var(--mono);font-size:11px;color:var(--dim);">No history in DB yet</span>';
-    return;
-  }
+/* ── Banner ── */
+function setBanner(state,text,sub){
+  const b=document.getElementById('banner');
+  b.className='status-banner '+state;
+  document.getElementById('banner-text').textContent=text;
+  document.getElementById('banner-sub').textContent=sub;
+  const icons={operational:'✓',degraded:'⚠',outage:'✕',checking:'⏳'};
+  document.getElementById('banner-icon').textContent=icons[state]||'⏳';
+  document.getElementById('banner-time').textContent='Last checked: '+new Date().toLocaleTimeString('en-GB',{hour12:false});
+}
 
-  const asc = [...rows].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-  const SLOT = 15 * 60 * 1000;
-  const startT = Math.floor(new Date(asc[0].created_at).getTime() / SLOT) * SLOT;
-  const endT   = Math.floor(Date.now() / SLOT) * SLOT;
+/* ── Metrics ── */
+function setMetric(id,value,cls,sub){
+  const el=document.getElementById('m-'+id);
+  el.textContent=value; el.className='metric-value '+(cls||'');
+  const s=document.getElementById('m-'+id+'-sub');
+  if(s) s.textContent=sub||'';
+}
 
-  const bucketMap = {};
-  asc.forEach(r => {
-    const k = Math.floor(new Date(r.created_at).getTime() / SLOT) * SLOT;
-    if (!bucketMap[k]) bucketMap[k] = [];
-    bucketMap[k].push(r);
+/* ── Components ── */
+function buildComponents(overallOk,dbOk,tgOk,latencyMs){
+  const statuses={
+    api:     overallOk?'up':'down',
+    database:dbOk?'up':'down',
+    auth:    overallOk?'up':'down',
+    drivers: overallOk?'up':'down',
+    bookings:overallOk?'up':'down',
+    alerts:  tgOk?'up':'down',
+  };
+  if(overallOk && latencyMs>1500){ statuses.api=statuses.auth=statuses.drivers=statuses.bookings='slow'; }
+
+  const tagLabel={up:'Operational',slow:'Degraded Performance',down:'Outage',unknown:'Unknown'};
+  const SLOTS=90, SLOT_MS=15*60*1000, now=Date.now();
+  const buckets={};
+  lastHistory.forEach(r=>{
+    const k=Math.floor(new Date(r.created_at).getTime()/SLOT_MS);
+    if(!buckets[k]) buckets[k]=[];
+    buckets[k].push(r);
   });
+  const startK=Math.floor((now-SLOTS*SLOT_MS)/SLOT_MS);
+  const slotKeys=Array.from({length:SLOTS},(_,i)=>startK+i);
 
-  const slots = [];
-  for (let t = startT; t <= endT; t += SLOT) {
-    slots.push({ t, checks: bucketMap[t] || [] });
-  }
-  const display = slots.slice(-96); // last 24h
-
-  el.innerHTML = display.map(b => {
-    const timeLabel = new Date(b.t).toLocaleString('en-GB',
-      { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-    if (!b.checks.length) {
-      return `<div class="slot empty"><div class="tip">${timeLabel}<br>No data</div></div>`;
-    }
-    const anyDown = b.checks.some(c => !c.ok);
-    const avgMs   = Math.round(b.checks.reduce((s,c) => s + (c.response_time || 0), 0) / b.checks.length);
-    const cls     = anyDown ? 'down' : avgMs > 1500 ? 'slow' : 'up';
-    const label   = anyDown ? 'Down' : avgMs > 1500 ? `Slow (avg ${avgMs}ms)` : `Up (avg ${avgMs}ms)`;
-    return `<div class="slot ${cls}"><div class="tip">${timeLabel}<br>${label}<br>${b.checks.length} check${b.checks.length > 1 ? 's' : ''}</div></div>`;
+  const slotHtml=()=>slotKeys.map(k=>{
+    const checks=buckets[k]||[];
+    const t=new Date(k*SLOT_MS).toLocaleString('en-GB',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    if(!checks.length) return `<div class="uptime-seg empty"><div class="seg-tip">${t}<br>No data</div></div>`;
+    const anyFail=checks.some(c=>!c.ok);
+    const avgMs=Math.round(checks.reduce((s,c)=>s+(c.response_time||0),0)/checks.length);
+    const cls=anyFail?'down':avgMs>1500?'slow':'up';
+    const lbl=anyFail?'Outage':avgMs>1500?`Slow (${avgMs}ms avg)`:`OK (${avgMs}ms avg)`;
+    return `<div class="uptime-seg ${cls}"><div class="seg-tip">${t}<br>${lbl}</div></div>`;
   }).join('');
 
-  const upSlots   = display.filter(b => b.checks.length && b.checks.every(c => c.ok) && !b.checks.some(c => c.response_time > 1500));
-  const totalData = display.filter(b => b.checks.length);
-  const pct = totalData.length ? Math.round((upSlots.length / totalData.length) * 100) : 0;
-  document.getElementById('timeline-meta').textContent =
-    `${display.length} slots · ${pct}% up`;
-}
+  const withData=slotKeys.filter(k=>buckets[k]?.length);
+  const pct=withData.length
+    ? Math.round((withData.filter(k=>!buckets[k].some(c=>!c.ok)).length/withData.length)*100)+'%'
+    : '—';
 
-/* ── response chart ── */
-function renderChart(rows) {
-  const el = document.getElementById('chart-bars');
-  if (!rows || !rows.length) { el.innerHTML = '<span class="no-data" style="align-self:center;">No data</span>'; return; }
-  const asc = [...rows].sort((a,b) => new Date(a.created_at) - new Date(b.created_at)).slice(-50);
-  const maxMs = Math.max(...asc.map(r => r.response_time || 0), 1000);
-  el.innerHTML = asc.map(r => {
-    const pct = Math.max(4, Math.round(((r.response_time || 0) / maxMs) * 100));
-    const cls = !r.ok ? 'fail' : (r.response_time || 0) > 1500 ? 'slow' : 'ok';
-    const time = new Date(r.created_at).toLocaleTimeString('en-GB', { hour12: false });
-    return `<div class="chart-bar ${cls}" style="height:${pct}%"><div class="tip">${time}<br>${r.response_time || 0}ms</div></div>`;
-  }).join('');
-  const ok = asc.filter(r => r.ok).length;
-  document.getElementById('chart-meta').textContent = `${ok}/${asc.length} successful`;
-}
-
-/* ── incidents ── */
-function renderIncidents(incidents) {
-  const el = document.getElementById('incident-list');
-  if (!incidents || !incidents.length) {
-    el.innerHTML = '<div class="no-data">✓ No incidents recorded</div>';
-    document.getElementById('incident-meta').textContent = 'all clear';
-    return;
-  }
-  const open = incidents.filter(i => i.status === 'open');
-  document.getElementById('incident-meta').textContent =
-    open.length ? `${open.length} active incident${open.length > 1 ? 's' : ''}` : 'all resolved';
-
-  el.innerHTML = incidents.map(i => {
-    const dur = i.status === 'open'
-      ? 'Ongoing — ' + durBetween(i.started_at, null)
-      : 'Duration: ' + durBetween(i.started_at, i.resolved_at);
-    return `<div class="incident ${i.status}">
-      <div class="inc-top">
-        <span class="badge ${i.status}">${i.status === 'open' ? 'ACTIVE' : 'RESOLVED'}</span>
-        <span class="inc-time">Started: ${fmtDT(i.started_at)}</span>
-        ${i.resolved_at ? `<span class="inc-time">Resolved: ${fmtDT(i.resolved_at)}</span>` : ''}
+  document.getElementById('components-card').innerHTML=COMPONENTS.map(c=>{
+    const st=statuses[c.id]||'unknown';
+    const dotCls=st==='up'?'up pulse':st;
+    return `<div class="component-row">
+      <div class="comp-left">
+        <div class="comp-dot ${dotCls}"></div>
+        <div><div class="comp-name">${c.name}</div><div class="comp-desc">${c.desc}</div></div>
       </div>
-      <div class="inc-dur">${dur}</div>
+      <div class="comp-right">
+        <div class="comp-uptime-bar">${slotHtml()}</div>
+        <div class="uptime-pct">${pct}</div>
+        <span class="comp-status-tag ${st}">${tagLabel[st]}</span>
+      </div>
     </div>`;
   }).join('');
 }
 
-/* ── load DB data ── */
-async function loadFromDB() {
-  try {
-    const [histRes, statsRes] = await Promise.all([
-      fetch(HISTORY_URL), fetch(STATS_URL)
-    ]);
-    const history = await histRes.json();
-    const stats   = await statsRes.json();
-
-    renderTimeline(history);
-    renderChart(history);
-    renderIncidents(stats.incidents || []);
-
-    setMetric('m-uptime', stats.uptime + '%',
-      stats.uptime >= 99 ? 'good' : stats.uptime >= 95 ? 'warn' : 'bad');
-    setMetric('m-avg', stats.avgResponse + 'ms', colorMs(stats.avgResponse));
-  } catch (err) {
-    console.error('DB load failed:', err.message);
-    document.getElementById('incident-list').innerHTML =
-      `<div class="no-data" style="color:var(--red);">Could not load history — ${err.message}</div>`;
+/* ── Chart ── */
+function renderChart(rows){
+  const el=document.getElementById('chart-area');
+  if(!rows||!rows.length){
+    el.innerHTML='<div style="align-self:center;font-family:var(--mono);font-size:12px;color:var(--text-3);">No data yet</div>';
+    return;
   }
+  const asc=[...rows].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).slice(-50);
+  const maxMs=Math.max(...asc.map(r=>r.response_time||0),500);
+  el.innerHTML=asc.map(r=>{
+    const h=Math.max(4,Math.round(((r.response_time||0)/maxMs)*100));
+    const cls=!r.ok?'fail':(r.response_time||0)>1500?'slow':'ok';
+    const t=new Date(r.created_at).toLocaleTimeString('en-GB',{hour12:false});
+    return `<div class="chart-col ${cls}" style="height:${h}%"><div class="seg-tip">${t}<br>${fmtMs(r.response_time||0)}${!r.ok?'<br>FAILED':''}</div></div>`;
+  }).join('');
+  const ok=asc.filter(r=>r.ok).length;
+  document.getElementById('chart-meta').textContent=`${ok}/${asc.length} successful`;
+  if(asc[0]) document.getElementById('chart-oldest').textContent=new Date(asc[0].created_at).toLocaleTimeString('en-GB',{hour12:false});
+  if(asc[asc.length-1]) document.getElementById('chart-newest').textContent=new Date(asc[asc.length-1].created_at).toLocaleTimeString('en-GB',{hour12:false});
 }
 
-/* ── telegram ── */
-async function checkTelegram() {
-  try {
-    const r = await fetch(TELEGRAM_URL);
-    const d = await r.json();
-    setMetric('m-telegram', d.ok ? 'Active' : 'Error', d.ok ? 'good' : 'bad', d.ok ? '@' + d.bot : '');
-  } catch {
-    setMetric('m-telegram', 'Error', 'bad');
+/* ── Incidents ── */
+function renderIncidents(incidents){
+  const list=document.getElementById('incident-list');
+  const meta=document.getElementById('incident-meta');
+  if(!incidents||!incidents.length){
+    list.innerHTML=`<div class="no-incidents"><div class="no-inc-icon">✓</div><div class="no-inc-text">All Systems Operational</div><div class="no-inc-sub">No incidents recorded</div></div>`;
+    meta.textContent='no incidents'; return;
   }
+  const open=incidents.filter(i=>i.status==='open');
+  meta.textContent=open.length?`${open.length} active incident${open.length>1?'s':''}`:`${incidents.length} resolved`;
+  list.innerHTML=incidents.map(i=>{
+    const isOpen=i.status==='open';
+    const d=isOpen?'Ongoing · '+dur(i.started_at):'Resolved · '+dur(i.started_at,i.resolved_at);
+    return `<div class="inc-item">
+      <div class="inc-row-top">
+        <div class="inc-title-wrap">
+          <div class="inc-indicator ${i.status}"></div>
+          <div class="inc-title">${isOpen?'API Outage':'Resolved Incident'}</div>
+        </div>
+        <span class="inc-badge ${i.status}">${isOpen?'Active':'Resolved'}</span>
+      </div>
+      <div class="inc-meta">
+        <span>Started ${fmtTime(i.started_at)}</span>
+        ${i.resolved_at?`<span>Resolved ${fmtTime(i.resolved_at)}</span>`:''}
+        <span>${d}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-/* ── health check ── */
-async function doCheck() {
-  const btn = document.getElementById('check-btn');
-  btn.disabled = true; btn.textContent = 'Checking…';
-  setPill('checking', 'Checking…', true);
+/* ── Main check — hits the single public endpoint only ── */
+async function doCheck(){
+  const btn=document.getElementById('check-btn');
+  const icon=document.getElementById('check-icon');
+  btn.disabled=true; icon.style.animation='spin .7s linear infinite';
+  setBanner('checking','Checking systems…','Fetching latest status');
 
-  const t0 = Date.now();
   try {
-    const res = await fetch(HEALTH_URL);
-    const ms  = Date.now() - t0;
+    const res = await fetch(STATUS_URL);
     const d   = await res.json();
-    const ok  = res.ok && d.ok;
 
-    setPill(ok ? 'online' : 'offline', ok ? 'Operational' : 'Degraded', false);
-    setMetric('m-api', ok ? 'Online' : 'Degraded', ok ? 'good' : 'warn');
-    setMetric('m-db',  d.db === 'connected' ? 'Connected' : 'Unreachable',
-                       d.db === 'connected' ? 'good' : 'bad');
-    setMetric('m-ms',  ms + 'ms', colorMs(ms),
-              ms < 500 ? 'fast' : ms < 1500 ? 'acceptable' : 'slow');
+    const overallOk = !!d.ok;
+    const dbOk      = d.db === 'connected';
+    const tgOk      = !!d.telegram?.ok;
+    const latencyMs = d.responseTime || 0;
 
-    document.getElementById('raw-pre').innerHTML = highlightJSON(d);
-    document.getElementById('raw-time').textContent =
-      new Date().toLocaleTimeString('en-GB', { hour12: false });
+    lastHistory = Array.isArray(d.history) ? d.history : [];
 
-    await loadFromDB();
-    await checkTelegram();
-  } catch (err) {
-    setPill('offline', 'Offline', false);
-    setMetric('m-api', 'Offline', 'bad');
-    setMetric('m-db',  '—', 'muted-c');
-    setMetric('m-ms',  '—', 'muted-c');
-    document.getElementById('raw-pre').innerHTML =
-      `<span style="color:var(--red)">Error: ${err.message}</span>`;
-    document.getElementById('raw-time').textContent =
-      new Date().toLocaleTimeString('en-GB', { hour12: false });
-    await loadFromDB();
+    /* Banner */
+    if(overallOk){
+      const state = latencyMs > 1500 ? 'degraded' : 'operational';
+      const text  = latencyMs > 1500 ? 'Degraded Performance' : 'All Systems Operational';
+      const sub   = latencyMs < 500  ? 'All services functioning normally'
+                  : latencyMs < 1500 ? 'Slight latency detected'
+                  : 'High latency — performance degraded';
+      setBanner(state,text,sub);
+    } else {
+      setBanner('outage','Service Disruption',dbOk?'API degraded':'Database unreachable');
+    }
+
+    /* Metrics */
+    setMetric('uptime',(d.uptime!==undefined?d.uptime+'%':'—'),d.uptime>=99?'good':d.uptime>=95?'warn':'bad','last 24 hours');
+    setMetric('avg',fmtMs(d.avgResponse||0),colorMs(d.avgResponse||0),'24h average');
+    setMetric('ms',fmtMs(latencyMs),colorMs(latencyMs),latencyMs<500?'fast':latencyMs<1500?'acceptable':'slow');
+    setMetric('tg',tgOk?'Active':'Error',tgOk?'good':'bad',tgOk?'@'+d.telegram.bot:'check config');
+
+    renderChart(lastHistory);
+    renderIncidents(d.incidents||[]);
+    buildComponents(overallOk,dbOk,tgOk,latencyMs);
+
+  } catch(err){
+    setBanner('outage','Unreachable','Cannot connect to status service');
+    setMetric('ms','—','bad','unreachable');
   }
 
-  btn.disabled = false; btn.textContent = 'Check now';
+  btn.disabled=false; icon.style.animation='';
 }
 
-/* ── auto refresh ── */
-function toggleAuto() {
-  autoActive = !autoActive;
-  const btn  = document.getElementById('auto-btn');
-  const wrap = document.getElementById('countdown-wrap');
-  if (autoActive) {
-    btn.textContent = 'Auto-refresh: on';
-    btn.className   = 'active-toggle';
-    wrap.style.display = 'flex';
-    startCountdown();
-    doCheck();
+/* ── Auto-refresh ── */
+function toggleAuto(){
+  autoActive=!autoActive;
+  const btn=document.getElementById('auto-btn');
+  const row=document.getElementById('countdown-row');
+  if(autoActive){
+    btn.textContent='Auto-refresh: on'; btn.className='btn active';
+    row.style.display='flex'; startCountdown(); doCheck();
   } else {
-    btn.textContent = 'Auto-refresh: off';
-    btn.className   = '';
-    wrap.style.display = 'none';
-    clearInterval(countdownInterval);
+    btn.textContent='Auto-refresh: off'; btn.className='btn';
+    row.style.display='none'; clearInterval(countdownTimer);
   }
 }
-
-function startCountdown() {
-  countdownSec = AUTO_SECS;
-  updateCountdown();
-  clearInterval(countdownInterval);
-  countdownInterval = setInterval(() => {
-    countdownSec--;
-    updateCountdown();
-    if (countdownSec <= 0) { countdownSec = AUTO_SECS; doCheck(); }
-  }, 1000);
+function startCountdown(){
+  countdownSec=AUTO_SECS; tickCd();
+  clearInterval(countdownTimer);
+  countdownTimer=setInterval(()=>{ countdownSec--; tickCd(); if(countdownSec<=0){countdownSec=AUTO_SECS;doCheck();} },1000);
+}
+function tickCd(){
+  const m=Math.floor(countdownSec/60),s=countdownSec%60;
+  document.getElementById('countdown-text').textContent=m+'m '+String(s).padStart(2,'0')+'s';
+  document.getElementById('progress-fill').style.width=((countdownSec/AUTO_SECS)*100)+'%';
 }
 
-function updateCountdown() {
-  const m = Math.floor(countdownSec / 60);
-  const s = countdownSec % 60;
-  document.getElementById('countdown-text').textContent =
-    m + 'm ' + String(s).padStart(2, '0') + 's';
-  document.getElementById('progress-fill').style.width =
-    ((countdownSec / AUTO_SECS) * 100) + '%';
-}
+const style=document.createElement('style');
+style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
 
-/* ── init ── */
-loadFromDB();
-doCheck();
+/* ── Placeholder components + first check ── */
+(function init(){
+  document.getElementById('components-card').innerHTML=COMPONENTS.map(c=>`
+    <div class="component-row">
+      <div class="comp-left">
+        <div class="comp-dot unknown"></div>
+        <div><div class="comp-name">${c.name}</div><div class="comp-desc">${c.desc}</div></div>
+      </div>
+      <div class="comp-right">
+        <div class="comp-uptime-bar">${Array(90).fill('<div class="uptime-seg empty"></div>').join('')}</div>
+        <div class="uptime-pct">—</div>
+        <span class="comp-status-tag unknown">Checking…</span>
+      </div>
+    </div>`).join('');
+  doCheck();
+})();
 </script>
 </body>
 </html>
